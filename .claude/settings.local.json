@@ -1,0 +1,32 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(where python *)",
+      "Bash(where python3 *)",
+      "Bash(ls /c/Python*)",
+      "Read(//c/Users/Administrator/AppData/Local/Programs/**)",
+      "Bash(cmd //c \"python --version\")",
+      "Bash(cmd //c \"where python\")",
+      "Bash(cmd *)",
+      "Bash(powershell *)",
+      "Read(//c/Program Files/Python312//**)",
+      "Read(//c/Program Files \\(x86\\)/**)",
+      "Bash(/c/Program Files/Python312/python.exe *)",
+      "Bash(start *)",
+      "Bash(taskkill //f //im pythonw.exe)",
+      "Bash(taskkill //f //im python.exe)",
+      "Bash(\"C:/Program Files/Python312/python.exe\" \"C:/Users/Administrator/Documents/firstcc/pomodoro.py\")",
+      "Bash(\"/c/Program Files/Python312/python.exe\" -c \"import py_compile; py_compile.compile\\('C:/Users/Administrator/Documents/firstcc/pomodoro.py', doraise=True\\); print\\('OK'\\)\")",
+      "Bash(\"/c/Program Files/Python312/python.exe\" \"C:/Users/Administrator/Documents/firstcc/pomodoro.py\")",
+      "Bash(git --version)",
+      "Bash(where git *)",
+      "Bash(git config *)",
+      "Bash(git credential-manager *)",
+      "Bash(gh --version)",
+      "Bash(gh auth *)",
+      "Bash(git init *)",
+      "Bash(git add *)",
+      "Bash(git commit *)"
+    ]
+  }
+}
