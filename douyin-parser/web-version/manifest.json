@@ -1,0 +1,22 @@
+{
+    "name": "抖音链接解析",
+    "short_name": "抖音解析",
+    "description": "快速解析抖音分享链接，提取视频信息",
+    "start_url": "./index.html",
+    "display": "standalone",
+    "background_color": "#f5f5f5",
+    "theme_color": "#E91E63",
+    "orientation": "portrait-primary",
+    "icons": [
+        {
+            "src": "icon-192.png",
+            "sizes": "192x192",
+            "type": "image/png"
+        },
+        {
+            "src": "icon-512.png",
+            "sizes": "512x512",
+            "type": "image/png"
+        }
+    ]
+}

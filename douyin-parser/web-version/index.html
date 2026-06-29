@@ -1,0 +1,587 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>抖音链接解析</title>
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#E91E63">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: #f5f5f5;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 480px;
+        }
+
+        .header {
+            text-align: center;
+            padding: 30px 0 20px;
+        }
+
+        .header .icon {
+            font-size: 48px;
+            margin-bottom: 8px;
+        }
+
+        .header h1 {
+            font-size: 24px;
+            font-weight: 700;
+            color: #1a1a1a;
+        }
+
+        .header p {
+            font-size: 13px;
+            color: #888;
+            margin-top: 4px;
+        }
+
+        .card {
+            background: #fff;
+            border-radius: 16px;
+            padding: 16px;
+            margin-bottom: 16px;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+        }
+
+        .input-group {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 12px;
+        }
+
+        .input-group input {
+            flex: 1;
+            border: 2px solid #e0e0e0;
+            border-radius: 12px;
+            padding: 12px 16px;
+            font-size: 14px;
+            outline: none;
+            transition: border-color 0.2s;
+            background: #fafafa;
+        }
+
+        .input-group input:focus {
+            border-color: #E91E63;
+            background: #fff;
+        }
+
+        .btn-row {
+            display: flex;
+            gap: 8px;
+        }
+
+        .btn {
+            flex: 1;
+            padding: 12px 16px;
+            border: none;
+            border-radius: 24px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 4px;
+        }
+
+        .btn:active {
+            transform: scale(0.96);
+            opacity: 0.9;
+        }
+
+        .btn-primary {
+            background: #E91E63;
+            color: #fff;
+        }
+
+        .btn-secondary {
+            background: #f5f5f5;
+            color: #333;
+        }
+
+        .btn-outline {
+            background: #fff;
+            color: #E91E63;
+            border: 2px solid #E91E63;
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .loader {
+            display: none;
+            width: 32px;
+            height: 32px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #E91E63;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            margin: 8px auto;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .loader.show {
+            display: block;
+        }
+
+        .result {
+            display: none;
+        }
+
+        .result.show {
+            display: block;
+        }
+
+        .cover-img {
+            width: 100%;
+            border-radius: 12px;
+            margin-bottom: 12px;
+            background: #e0e0e0;
+            min-height: 200px;
+            object-fit: cover;
+        }
+
+        .info-row {
+            padding: 8px 0;
+            font-size: 14px;
+            color: #555;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        .info-row:last-child {
+            border-bottom: none;
+        }
+
+        .info-row strong {
+            color: #333;
+            display: inline-block;
+            width: 60px;
+        }
+
+        .info-row a {
+            color: #E91E63;
+            word-break: break-all;
+            text-decoration: none;
+        }
+
+        .result-title {
+            font-size: 16px;
+            font-weight: 700;
+            color: #1a1a1a;
+            padding: 8px 0;
+            line-height: 1.4;
+        }
+
+        .result-actions {
+            display: flex;
+            gap: 8px;
+            margin-top: 12px;
+        }
+
+        .result-actions .btn {
+            font-size: 13px;
+            padding: 10px;
+        }
+
+        .toast {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #333;
+            color: #fff;
+            padding: 12px 24px;
+            border-radius: 24px;
+            font-size: 14px;
+            z-index: 1000;
+            opacity: 0;
+            transition: opacity 0.3s;
+            pointer-events: none;
+        }
+
+        .toast.show {
+            opacity: 1;
+        }
+
+        .tag {
+            display: inline-block;
+            background: #fce4ec;
+            color: #E91E63;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 600;
+            margin-right: 4px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="icon">🎵</div>
+            <h1>抖音链接解析</h1>
+            <p>粘贴分享链接，快速提取视频信息</p>
+        </div>
+
+        <div class="card">
+            <div class="input-group">
+                <input type="text" id="urlInput" placeholder="在此粘贴抖音链接..." autocomplete="off" autofocus>
+            </div>
+            <div class="btn-row">
+                <button class="btn btn-secondary" id="pasteBtn">📋 粘贴</button>
+                <button class="btn btn-primary" id="parseBtn">🔍 解析</button>
+                <button class="btn btn-outline" id="clearBtn">✕ 清空</button>
+            </div>
+            <div class="loader" id="loader"></div>
+        </div>
+
+        <div class="card result" id="resultCard">
+            <img class="cover-img" id="coverImg" alt="视频封面" style="display:none">
+            <div class="result-title" id="resultTitle"></div>
+            <div class="info-row"><strong>👤 作者</strong> <span id="resultAuthor"></span></div>
+            <div class="info-row"><strong>🆔 ID</strong> <span id="resultVideoId"></span></div>
+            <div class="info-row"><strong>📝 描述</strong> <span id="resultDesc"></span></div>
+            <div class="info-row"><strong>🎵 音乐</strong> <span id="resultMusic"></span></div>
+            <div class="info-row"><strong>🔗 链接</strong> <a id="resultUrl" href="#" target="_blank"></a></div>
+            <div class="result-actions">
+                <button class="btn btn-primary" id="openDouyinBtn">在抖音中打开</button>
+                <button class="btn btn-secondary" id="copyUrlBtn">复制链接</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="toast" id="toast"></div>
+
+    <script>
+    (function() {
+        const urlInput = document.getElementById('urlInput');
+        const parseBtn = document.getElementById('parseBtn');
+        const pasteBtn = document.getElementById('pasteBtn');
+        const clearBtn = document.getElementById('clearBtn');
+        const loader = document.getElementById('loader');
+        const resultCard = document.getElementById('resultCard');
+        const coverImg = document.getElementById('coverImg');
+        const resultTitle = document.getElementById('resultTitle');
+        const resultAuthor = document.getElementById('resultAuthor');
+        const resultVideoId = document.getElementById('resultVideoId');
+        const resultDesc = document.getElementById('resultDesc');
+        const resultMusic = document.getElementById('resultMusic');
+        const resultUrl = document.getElementById('resultUrl');
+        const openDouyinBtn = document.getElementById('openDouyinBtn');
+        const copyUrlBtn = document.getElementById('copyUrlBtn');
+        const toast = document.getElementById('toast');
+
+        // 抖音链接正则
+        const DOUYIN_REGEX = /(https?:\/\/)?(www\.|v\.)?(douyin\.com|iesdouyin\.com)\/[^\s]+/i;
+        const VIDEO_ID_REGEX = /(?:video|note|aweme)\/(\d+)/i;
+
+        let currentVideoInfo = null;
+
+        function showToast(msg) {
+            toast.textContent = msg;
+            toast.classList.add('show');
+            setTimeout(() => toast.classList.remove('show'), 2000);
+        }
+
+        function setLoading(loading) {
+            loader.classList.toggle('show', loading);
+            parseBtn.disabled = loading;
+            parseBtn.textContent = loading ? '解析中...' : '🔍 解析';
+        }
+
+        function isDouyinUrl(text) {
+            return DOUYIN_REGEX.test(text);
+        }
+
+        function extractDouyinUrl(text) {
+            const match = text.match(DOUYIN_REGEX);
+            return match ? match[0] : null;
+        }
+
+        function extractVideoId(url) {
+            const match = url.match(VIDEO_ID_REGEX);
+            return match ? match[1] : null;
+        }
+
+        async function resolveShortUrl(shortUrl) {
+            try {
+                // 使用 no-cors 模式的 fetch 来触发重定向
+                // 对于 v.douyin.com 短链接，我们需要跟随重定向
+                const resp = await fetch(shortUrl, {
+                    method: 'HEAD',
+                    redirect: 'follow',
+                    headers: {
+                        'User-Agent': 'Mozilla/5.0 (Linux; Android 13; Pixel 7) AppleWebKit/537.36'
+                    }
+                });
+                return resp.url;
+            } catch (e) {
+                console.warn('HEAD request failed, trying GET:', e.message);
+                // 降级使用 GET
+                try {
+                    const resp = await fetch(shortUrl, {
+                        method: 'GET',
+                        redirect: 'follow',
+                        headers: {
+                            'User-Agent': 'Mozilla/5.0 (Linux; Android 13; Pixel 7) AppleWebKit/537.36'
+                        }
+                    });
+                    const text = await resp.text();
+                    return extractInfoFromHtml(text, resp.url);
+                } catch (e2) {
+                    console.error('所有请求失败:', e2.message);
+                    return null;
+                }
+            }
+        }
+
+        function extractInfoFromHtml(html, finalUrl) {
+            const info = {
+                url: finalUrl,
+                videoId: extractVideoId(finalUrl),
+                title: null,
+                author: null,
+                cover: null,
+                description: null,
+                music: null
+            };
+
+            // 提取 meta 标签
+            const metaPatterns = {
+                title: [
+                    /<meta[^>]+property=["']og:title["'][^>]+content=["']([^"']+)["']/i,
+                    /<meta[^>]+name=["']twitter:title["'][^>]+content=["']([^"']+)["']/i,
+                    /<title>([^<]+)<\/title>/i
+                ],
+                description: [
+                    /<meta[^>]+property=["']og:description["'][^>]+content=["']([^"']+)["']/i,
+                    /<meta[^>]+name=["']description["'][^>]+content=["']([^"']+)["']/i
+                ],
+                cover: [
+                    /<meta[^>]+property=["']og:image["'][^>]+content=["']([^"']+)["']/i,
+                    /<meta[^>]+name=["']twitter:image["'][^>]+content=["']([^"']+)["']/i
+                ]
+            };
+
+            for (const [key, patterns] of Object.entries(metaPatterns)) {
+                for (const pattern of patterns) {
+                    const match = html.match(pattern);
+                    if (match && match[1]) {
+                        info[key] = match[1].replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"');
+                        break;
+                    }
+                }
+            }
+
+            // 提取作者 (从 JSON 数据)
+            const nickMatch = html.match(/"nickname"\s*:\s*"([^"]+)"/);
+            if (nickMatch) info.author = nickMatch[1];
+
+            // 提取音乐
+            const musicMatch = html.match(/"music"\s*:\s*\{[^}]*"title"\s*:\s*"([^"]+)"/);
+            if (musicMatch) info.music = musicMatch[1];
+
+            return info;
+        }
+
+        async function parseUrl(url) {
+            const douyinUrl = extractDouyinUrl(url);
+            if (!douyinUrl) {
+                showToast('未检测到有效的抖音链接');
+                return;
+            }
+
+            setLoading(true);
+            resultCard.classList.remove('show');
+
+            try {
+                let finalUrl = douyinUrl;
+                if (!finalUrl.startsWith('http')) {
+                    finalUrl = 'https://' + finalUrl;
+                }
+
+                // 跟随重定向获取最终 URL
+                const resolvedUrl = await resolveShortUrl(finalUrl);
+
+                if (resolvedUrl && typeof resolvedUrl === 'object') {
+                    // 已经解析出信息
+                    currentVideoInfo = resolvedUrl;
+                } else {
+                    const actualUrl = resolvedUrl || finalUrl;
+                    currentVideoInfo = {
+                        url: actualUrl,
+                        videoId: extractVideoId(actualUrl),
+                        title: null,
+                        author: null,
+                        cover: null,
+                        description: null,
+                        music: null
+                    };
+
+                    // 尝试获取页面信息
+                    if (actualUrl !== finalUrl) {
+                        try {
+                            const resp = await fetch(actualUrl, {
+                                headers: {
+                                    'User-Agent': 'Mozilla/5.0 (Linux; Android 13; Pixel 7) AppleWebKit/537.36'
+                                }
+                            });
+                            const html = await resp.text();
+                            const extracted = extractInfoFromHtml(html, actualUrl);
+                            Object.assign(currentVideoInfo, extracted);
+                        } catch (e) {
+                            console.warn('无法获取页面详情:', e.message);
+                        }
+                    }
+                }
+
+                displayResult(currentVideoInfo);
+            } catch (e) {
+                console.error('解析错误:', e);
+                showToast('解析失败: ' + e.message);
+                setLoading(false);
+            }
+        }
+
+        function displayResult(info) {
+            setLoading(false);
+
+            if (info.cover) {
+                coverImg.src = info.cover;
+                coverImg.style.display = 'block';
+                coverImg.onerror = () => { coverImg.style.display = 'none'; };
+            } else {
+                coverImg.style.display = 'none';
+            }
+
+            resultTitle.textContent = info.title || '抖音视频';
+            resultTitle.style.display = info.title ? '' : 'none';
+
+            resultAuthor.textContent = info.author || '未知';
+            resultVideoId.textContent = info.videoId || '未能提取';
+            resultDesc.textContent = info.description || '无描述';
+            resultMusic.textContent = info.music || '无';
+
+            resultUrl.href = info.url;
+            resultUrl.textContent = info.url;
+
+            resultCard.classList.add('show');
+
+            // 设置按钮事件
+            openDouyinBtn.onclick = () => {
+                const schemeUrl = info.videoId
+                    ? 'snssdk1128://aweme/detail/' + info.videoId
+                    : info.url;
+                window.open(schemeUrl, '_blank');
+                // 降级：如果2秒后没有反应，打开网页版
+                setTimeout(() => {
+                    window.open(info.url, '_blank');
+                }, 2000);
+            };
+
+            copyUrlBtn.onclick = () => {
+                navigator.clipboard.writeText(info.url).then(() => {
+                    showToast('链接已复制到剪贴板');
+                }).catch(() => {
+                    // Fallback
+                    const ta = document.createElement('textarea');
+                    ta.value = info.url;
+                    document.body.appendChild(ta);
+                    ta.select();
+                    document.execCommand('copy');
+                    document.body.removeChild(ta);
+                    showToast('链接已复制到剪贴板');
+                });
+            };
+        }
+
+        // 按钮事件
+        parseBtn.addEventListener('click', () => {
+            const url = urlInput.value.trim();
+            if (!url) {
+                showToast('请输入抖音链接');
+                return;
+            }
+            parseUrl(url);
+        });
+
+        pasteBtn.addEventListener('click', async () => {
+            try {
+                const text = await navigator.clipboard.readText();
+                if (text) {
+                    const douyinUrl = extractDouyinUrl(text);
+                    urlInput.value = douyinUrl || text;
+                    showToast('已粘贴');
+                }
+            } catch (e) {
+                showToast('无法访问剪贴板，请手动粘贴');
+            }
+        });
+
+        clearBtn.addEventListener('click', () => {
+            urlInput.value = '';
+            resultCard.classList.remove('show');
+            currentVideoInfo = null;
+        });
+
+        // 回车键解析
+        urlInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                const url = urlInput.value.trim();
+                if (url) parseUrl(url);
+            }
+        });
+
+        // 自动检测剪贴板中的抖音链接
+        async function autoDetectClipboard() {
+            try {
+                const text = await navigator.clipboard.readText();
+                if (text && isDouyinUrl(text) && !urlInput.value) {
+                    const douyinUrl = extractDouyinUrl(text);
+                    urlInput.value = douyinUrl;
+                    showToast('检测到抖音链接，已自动填入');
+                }
+            } catch (e) {
+                // 静默失败
+            }
+        }
+
+        // 页面加载时自动检测
+        window.addEventListener('load', () => {
+            setTimeout(autoDetectClipboard, 500);
+        });
+
+        // 监听页面可见性变化，从后台回来时检测剪贴板
+        document.addEventListener('visibilitychange', () => {
+            if (document.visibilityState === 'visible') {
+                setTimeout(autoDetectClipboard, 300);
+            }
+        });
+    })();
+    </script>
+</body>
+</html>
